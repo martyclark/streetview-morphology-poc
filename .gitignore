@@ -1,0 +1,14 @@
+.env.toml
+outputs/
+.venv/
+__pycache__/
+*.egg-info/
+# GitHub rejects files >100 MB; regenerate or copy from urban-heat-TARGET
+data/chiang_mai/gba_buildings.gpkg
+webapp/node_modules/
+webapp/dist/
+webapp/public/data/*/
+webapp/*.tsbuildinfo
+webapp/vite.config.js
+webapp/vite.config.d.ts
+data/jos/gba_buildings.gpkg

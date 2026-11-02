@@ -1,0 +1,23 @@
+[project]
+name = "streetview-morphology-poc"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "geopandas>=1.0",
+    "rasterio>=1.4",
+    "shapely>=2.0",
+    "scipy>=1.13",
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "requests>=2.32",
+    "pyogrio>=0.9",
+    "pillow>=10",
+    "mapbox-vector-tile>=2.0",
+    "pmtiles>=3.5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools]
+packages = []

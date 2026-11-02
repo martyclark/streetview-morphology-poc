@@ -1,0 +1,22 @@
+[
+  {
+    "id": "chiang_mai",
+    "name": "Chiang Mai",
+    "country": "Thailand",
+    "center": [99.0, 18.77],
+    "zoom": 12.2,
+    "source": "Gemini 3.1 Flash-Lite, up to 3 Street View crops per building",
+    "labelled": true,
+    "buildings": 467742
+  },
+  {
+    "id": "jos",
+    "name": "Jos",
+    "country": "Nigeria",
+    "center": [8.89, 9.9],
+    "zoom": 12.4,
+    "source": "",
+    "labelled": false,
+    "buildings": 418878
+  }
+]
