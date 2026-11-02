@@ -29,7 +29,7 @@ GBA footprints (data/<city>/gba_buildings.gpkg)
 ## Global Invariants
 
 - The files `scripts/export_web.py` writes and `webapp/src/lib.ts` reads must stay in step (`Sample` fields, tile properties `h, fid, hl, dh`).
-- The `FLOOR_H` and `ROOF` height assumptions live in `scripts/common.py`; `webapp/src/components/About.tsx` repeats the floor heights for display.
+- The `FLOOR_H` and `ROOF` height assumptions live only in `scripts/common.py`. `scripts/export_web.py` publishes them as `assumptions.json` and the viewer's About tab displays that file.
 - The sample's row index is the `fid` used across every CSV and the viewer.
 
 ## Global Side Effects

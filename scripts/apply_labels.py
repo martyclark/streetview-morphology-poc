@@ -1,6 +1,6 @@
 """Merge hand/LLM labels into the pilot table and derive a storey-based height.
 
-Height model: storeys * floor_height(use) + 1.5 m pitched-roof allowance. Floor heights are assumptions, not measured.
+Height model: storeys * floor_height(use) + roof allowance, both from common.py. They are assumptions, not measured.
 """
 import sys
 

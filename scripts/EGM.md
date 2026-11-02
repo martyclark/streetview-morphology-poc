@@ -6,7 +6,7 @@ Command-line pipeline that turns a city's Global Building Atlas (GBA) footprints
 
 ## Interface
 
-- `common.py`: `FLOOR_H`, `ROOF`, `fov_deg`. Imported as `common`, which works because Python puts the script's directory on `sys.path`.
+- `common.py`: `FLOOR_H` (storey height by use), `ROOF` (roof allowance, currently 0.0 for flat roofs; both are placeholders), `fov_deg`. Imported as `common`, which works because Python puts the script's directory on `sys.path`.
 
 Each script's entry point is `main()` guarded by `if __name__ == "__main__"`, except `apply_labels.py` and `contact_sheets.py`, which run at module level and read `sys.argv` positionally.
 
@@ -16,13 +16,13 @@ Each script's entry point is `main()` guarded by `if __name__ == "__main__"`, ex
 - `contact_sheets.py` (module level): `multiview.csv outdir`. Writes `outdir/sheet_<nn>_fids_<a>_<b>.jpg`, two buildings per sheet. Constant `TILE`.
 - `classify_gemini.py` (`main`, `classify`, `marked_jpeg`, `api_key`): `multiview out [--model gemini-3.1-flash-lite] [--sleep 4] [--hints-sample sample.gpkg]`. Writes a CSV with `fid, lcz, n_views, storeys, use, confidence, n_visible, note`. Constants `URL`, `PROMPT`, `HINT_PROMPT`, `SCHEMA`.
 - `apply_labels.py` (module level): `pilot.csv labels.csv out.csv`. Joins on `fid`, adds `height_new` and `diff_gba_minus_new`, and prints error statistics. Constants `FLOOR_H`, `ROOF`.
-- `export_web.py` (`main`, `build_tiles`, `height_from`, `view_geometry`, `is_sliver`, `tile_bounds`): `city --gba gpkg [--sample gpkg] [--labels csv] [--multiview csv ...] [--second-pass csv] [--skip-tiles] [--out webapp/public/data]`. Writes `<out>/<city>/buildings.pmtiles`, `samples.geojson` and `img/<fid>_<view>.jpg`. Constants `FLOOR_H`, `ROOF`, `CAMERA_H`, `PITCH`, `ZOOMS`, `EXTENT`, `MIN_AREA_Z12`.
+- `export_web.py` (`main`, `build_tiles`, `height_from`, `view_geometry`, `is_sliver`, `tile_bounds`): `city --gba gpkg [--sample gpkg] [--labels csv] [--multiview csv ...] [--second-pass csv] [--skip-tiles] [--out webapp/public/data]`. Writes `<out>/<city>/buildings.pmtiles`, `samples.geojson`, `assumptions.json` (`{floor_h, roof_m}` from `common.py`) and `img/<fid>_<view>.jpg`. LLM heights (`hl`) are computed here with `height_from(storeys, use)`; the `height_new` column in the labels CSV is not read. Constants `FLOOR_H`, `ROOF`, `CAMERA_H`, `PITCH`, `ZOOMS`, `EXTENT`, `MIN_AREA_Z12`.
 - `mapillary_coverage.py` (`main`, `fetch_tile`): `gpkg [--n 5000] [--radius 40] [--out gpkg]`. Prints Mapillary coverage statistics for a random building sample. Constants `API`, `TILE_DEG`.
 
 ## Invariants
 
 - `fid` is the row index of the sample GeoPackage. `streetview_*`, `classify_gemini.py`, `contact_sheets.py` and `export_web.py` all rely on it (`export_web.py` indexes `sample.geometry[fid]` and asserts every sample building matches a GBA footprint with the same height).
-- `FLOOR_H`, `ROOF` and `fov_deg(width_m, dist_m)` live in `common.py` and are imported by `apply_labels.py`, `export_web.py` and (for `fov_deg`) `streetview_pilot.py` and `streetview_multiview.py`. The floor-height table is also repeated by hand in `webapp/src/components/About.tsx`.
+- `FLOOR_H`, `ROOF` and `fov_deg(width_m, dist_m)` live in `common.py` and are imported by `apply_labels.py`, `export_web.py` and (for `fov_deg`) `streetview_pilot.py` and `streetview_multiview.py`. The viewer does not repeat them: it reads the published `assumptions.json`. Changing `common.py` changes the exported heights only after `export_web.py` is re-run, because heights are baked into the tiles.
 - `export_web.py` (`view_geometry`) recomputes the field of view to describe the crops the fetch scripts made, so it must keep using `fov_deg`. `streetview_*` take `width` from bounds in UTM metres; `export_web.py` converts degrees to metres with 111320 m/deg.
 - `streetview_multiview.py` keeps only panoramas with zero blocking footprints (area > 20 m²) and `MIN_D <= dist_m <= MAX_D`, and fetches images with `pitch=10`, which matches `PITCH` in `export_web.py`.
 - `streetview_multiview.py` stops fetching when `--max-image-requests` is reached, writing the rows gathered so far. Images are billed; metadata calls are not.

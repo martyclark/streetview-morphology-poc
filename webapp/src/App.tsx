@@ -8,7 +8,7 @@ import Legend from "./components/Legend";
 import Scatter from "./components/Scatter";
 import {
   CONFS, USES, VERDICTS, colorExpr, computeStats, fmt, heightExpr, loadVerdicts, saveVerdicts, signed, verdictsCsv,
-  type City, type Mode, type Sample, type Verdict,
+  type Assumptions, type City, type Mode, type Sample, type Verdict,
 } from "./lib";
 
 const BASEMAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
@@ -34,6 +34,7 @@ export default function App() {
   const [cities, setCities] = useState<City[]>([]);
   const [cityId, setCityId] = useState<string>("");
   const [samples, setSamples] = useState<Sample[]>([]);
+  const [assumptions, setAssumptions] = useState<Assumptions | undefined>();
   const [mode, setMode] = useState<Mode>("gba");
   const [extrude, setExtrude] = useState(false);
   const [spin, setSpin] = useState(false);
@@ -67,11 +68,13 @@ export default function App() {
     if (!city) return;
     setSelected(null);
     setSamples([]);
+    setAssumptions(undefined);
     if (!labelled) {
       setMode("gba");
       setTab((t) => (t === "inspect" ? "overview" : t));
       return;
     }
+    fetch(`${base}/assumptions.json`).then((r) => (r.ok ? r.json() : undefined)).then(setAssumptions).catch(() => undefined);
     fetch(`${base}/samples.geojson`).then((r) => r.json()).then((fc) => {
       setSamples(fc.features.map((f: any) => ({
         ...f.properties,
@@ -370,7 +373,7 @@ export default function App() {
           </div>
 
           <div className="panel-body">
-            {tab === "about" && <About city={city} />}
+            {tab === "about" && <About city={city} assumptions={assumptions} />}
 
             {tab !== "about" && !labelled && (
               <div className="empty-note">
@@ -433,8 +436,8 @@ export default function App() {
                     <h3>GBA vs LLM height</h3>
                     <Scatter samples={filtered} selected={selected} onSelect={setSelected} />
                     <p className="hint">
-                      Dots below the line: the LLM estimate is lower than GBA. {city?.source}. Heights are storeys × floor height by use
-                      + 1.5 m roof, with floor heights assumed, not measured. No ground truth is available yet. See the About tab.
+                      Dots below the line: the LLM estimate is lower than GBA. {city?.source}. LLM heights are storeys × an assumed floor height by use
+                      (plus a roof allowance). The assumptions are listed in the About tab and are not measured. No ground truth is available yet.
                     </p>
                   </>
                 )}

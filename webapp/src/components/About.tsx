@@ -1,15 +1,10 @@
-import { LCZ_NAMES, type City } from "../lib";
-
-const FLOOR_ROWS: [string, string][] = [
-  ["residential", "3.0 m"], ["institutional", "3.2 m"], ["commercial", "3.5 m"], ["mixed", "3.5 m"],
-  ["industrial", "4.5 m"], ["ancillary", "3.0 m"], ["vacant", "0 m"],
-];
+import { LCZ_NAMES, type Assumptions, type City } from "../lib";
 
 const A = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <a href={href} target="_blank" rel="noreferrer">{children}</a>
 );
 
-export default function About({ city }: { city?: City }) {
+export default function About({ city, assumptions }: { city?: City; assumptions?: Assumptions }) {
   return (
     <div className="about">
       <h3>What this shows</h3>
@@ -47,14 +42,24 @@ export default function About({ city }: { city?: City }) {
           footprint area and a red tick marking the target). That answer is shown as a second opinion and is not used in the map colours.
         </li>
         <li>
-          <b>Height.</b> LLM height = storeys × a floor height that depends on the use + 1.5 m for a pitched roof. Vacant plots get 0 m.
+          <b>Height.</b> LLM height = storeys × a floor height that depends on the use, plus a roof allowance. Vacant plots get 0 m.
+          The values used are listed below.
         </li>
       </ol>
-      <table className="floor-table">
-        <thead><tr><th>Use</th><th>Floor height</th></tr></thead>
-        <tbody>{FLOOR_ROWS.map(([u, h]) => <tr key={u}><td>{u}</td><td>{h}</td></tr>)}</tbody>
-      </table>
-      <p className="hint">Floor heights and the roof allowance are assumptions, not measurements. Storey counts are integers, so LLM heights are steps.</p>
+      {assumptions && (
+        <table className="floor-table">
+          <thead><tr><th>Assumption</th><th>Value</th></tr></thead>
+          <tbody>
+            {Object.entries(assumptions.floor_h).map(([u, h]) => <tr key={u}><td>Floor height, {u}</td><td>{h.toFixed(1)} m</td></tr>)}
+            <tr><td>Roof allowance</td><td>{assumptions.roof_m.toFixed(1)} m</td></tr>
+          </tbody>
+        </table>
+      )}
+      <p className="hint">
+        These are placeholders applied to the whole city, not measurements. The roof allowance is {assumptions ? `${assumptions.roof_m.toFixed(1)} m` : "set per city"},
+        which assumes flat roofs. Pitched roofs would add height, so those buildings are likely underestimated. Storey counts are integers,
+        so LLM heights are steps. The assumptions may later be replaced by local building typologies.
+      </p>
 
       <h3>Datasets and software</h3>
       <ul className="sources">

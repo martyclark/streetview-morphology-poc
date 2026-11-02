@@ -6,7 +6,7 @@ Presentational React components for the viewer's side panel and map overlay. The
 
 ## Interface
 
-- `About.tsx`: default export `About({ city?: City })`. Static explanation of method, datasets and limits. Contains a `FLOOR_ROWS` table of floor heights per use and a hard-coded list of data sources.
+- `About.tsx`: default export `About({ city?: City, assumptions?: Assumptions })`. Explanation of method, datasets and limits, with a table of the height assumptions taken from the `assumptions` prop and a hard-coded list of data sources.
 - `Detail.tsx`: default export `Detail({ sample, base, position, verdict?, onVerdict, onPrev, onNext, onClose })`. Shows heights, the right/wrong/unsure verdict buttons, warnings for `sample.sliver` and `sample.cut`, the photos from `${base}/img/<f>`, the model's label and note, the optional second opinion `sample.alt`, a full-size image lightbox, and a panorama modal.
 - `Legend.tsx`: default export `Legend({ mode })`. Colour bar from `HEIGHT_STOPS` or `DIFF_STOPS` plus a "not sampled" swatch for `NO_DATA` when `mode !== "gba"`.
 - `Scatter.tsx`: default export `Scatter({ samples, selected, onSelect })`. SVG plot of GBA height (`h`) against LLM height (`hl`), both clipped to `MAX = 25` m, with a 1:1 line. Samples with `hl == null` are not drawn. Clicking a dot calls `onSelect(fid)`.
@@ -15,7 +15,7 @@ Presentational React components for the viewer's side panel and map overlay. The
 
 - Components do not fetch data or touch the map. `Detail` loads images by URL only.
 - `Detail` renders the embedded 360° view only when `embedUrl` returns a URL, which requires `VITE_GMAPS_EMBED_KEY` at build time. Otherwise it links to Google Maps through `streetViewUrl`.
-- The floor heights in `About.tsx` (`FLOOR_ROWS`) mirror `FLOOR_H` in `scripts/export_web.py` and `scripts/apply_labels.py`. They are typed separately and do not update automatically.
+- `About` holds no height numbers of its own. Floor heights and the roof allowance come from `assumptions`, so the About text, table and the heights on the map cannot drift apart.
 - `Scatter` cannot show points above 25 m; `Math.min(v, MAX)` pins them to the edge.
 
 ## Side Effects

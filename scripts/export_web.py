@@ -134,6 +134,7 @@ def main():
     a = ap.parse_args()
     out = Path(a.out) / a.city
     (out / "img").mkdir(parents=True, exist_ok=True)
+    (out / "assumptions.json").write_text(json.dumps({"floor_h": FLOOR_H, "roof_m": ROOF}, indent=1))
 
     gba = gpd.read_file(a.gba).reset_index(drop=True)
     gba["h"] = gba.height.round(1)
@@ -157,8 +158,8 @@ def main():
 
     for fid, gi in match.items():
         gba.loc[gi, "fid"] = fid
-        if fid in labels.index and not pd.isna(labels.at[fid, "height_new"]):
-            hl = round(float(labels.at[fid, "height_new"]), 1)
+        hl = height_from(labels.at[fid, "storeys"], labels.at[fid, "use"]) if fid in labels.index else None
+        if hl is not None:
             gba.loc[gi, "hl"] = hl
             gba.loc[gi, "dh"] = round(hl - float(gba.at[gi, "h"]), 1)
     merc = gba[["h", "fid", "hl", "dh", "geometry"]].to_crs(3857)
@@ -182,7 +183,7 @@ def main():
             imgs.append({"f": name, "date": v.date, "dist": round(v.dist_m), "pano": v.pano_id, "hd": round(v.heading), "fov": fov})
         gi = match[fid]
         p = {"fid": int(fid), "lcz": int(r.lcz), "h": round(float(gba.at[gi, "h"]), 1), "storeys": None if pd.isna(r.storeys) else int(r.storeys),
-             "use": r.use, "conf": r.confidence, "hl": None if pd.isna(r.height_new) else round(float(r.height_new), 1),
+             "use": r.use, "conf": r.confidence, "hl": height_from(r.storeys, r.use),
              "note": r.note, "nvis": int(r.n_visible), "imgs": imgs, "vt": round(max(tops), 1)}
         p["sliver"] = bool(is_sliver(sample_m.geometry[fid]))
         p["cut"] = bool(p["hl"] is not None and p["hl"] > p["vt"])  # LLM height above the visible top in every view

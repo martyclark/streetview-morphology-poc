@@ -48,6 +48,12 @@ export interface City {
   buildings?: number;
 }
 
+/** Height assumptions published by scripts/export_web.py as <city>/assumptions.json. */
+export interface Assumptions {
+  floor_h: Record<string, number>; // m per storey, by use
+  roof_m: number; // roof allowance added on top, m
+}
+
 export const HEIGHT_STOPS: [number, string][] = [
   [0, "#fff7bc"],
   [3, "#fee391"],

@@ -1,10 +1,11 @@
 """Constants and formulas shared by the scripts. Scripts run as `python scripts/<name>.py`, so this imports as `common`."""
 import math
 
-# Assumed storey heights by building use, plus a pitched-roof allowance. Not measured.
-# webapp/src/components/About.tsx repeats the floor heights for display.
-FLOOR_H = {"residential": 3.0, "institutional": 3.2, "commercial": 3.5, "mixed": 3.5, "industrial": 4.5, "ancillary": 3.0, "vacant": 0.0}
-ROOF = 1.5
+# Placeholder height assumptions, not measurements: storey height by building use, and a roof allowance added on top.
+# ROOF is 0 because the Chiang Mai shophouses checked so far have flat roofs; pitched roofs would need a positive value.
+# export_web.py publishes these next to the data (assumptions.json) and the viewer's About tab displays them.
+FLOOR_H = {"residential": 3.0, "institutional": 3.2, "commercial": 3.2, "mixed": 3.2, "industrial": 4.5, "ancillary": 3.0, "vacant": 0.0}
+ROOF = 0.0
 
 
 def fov_deg(width_m, dist_m):

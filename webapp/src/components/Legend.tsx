@@ -8,7 +8,7 @@ export default function Legend({ mode }: { mode: Mode }) {
     mode === "diff"
       ? "LLM height minus GBA height (red: LLM taller, blue: GBA taller)"
       : mode === "llm"
-        ? "Height from LLM storey count × floor height + 1.5 m roof"
+        ? "Height from LLM storey count × assumed floor height (see About)"
         : "Global Building Atlas height";
   return (
     <div className="legend">

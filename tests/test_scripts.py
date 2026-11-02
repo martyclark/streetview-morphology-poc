@@ -6,7 +6,7 @@ from shapely.geometry import box
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
-from common import fov_deg  # noqa: E402
+from common import FLOOR_H, ROOF, fov_deg  # noqa: E402
 from export_web import height_from, is_sliver, view_geometry  # noqa: E402
 
 
@@ -17,7 +17,8 @@ def test_fov_frames_building_and_is_clamped():
 
 
 def test_height_from_storeys_and_use():
-    assert height_from(3, "residential") == 10.5  # 3 * 3.0 + 1.5
+    assert height_from(3, "residential") == round(3 * FLOOR_H["residential"] + ROOF, 1)
+    assert height_from(3, "mixed") == round(3 * FLOOR_H["mixed"] + ROOF, 1)
     assert height_from(0, "residential") == 0.0
     assert height_from(np.nan, "residential") is None
     assert height_from(2, "unknown") is None
