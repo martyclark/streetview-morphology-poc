@@ -127,6 +127,8 @@ def main():
         if not keep:
             rows.append({"fid": idx, "lcz": b.lcz, "view": -1, "n_candidates": len(cands)})
         print(f"{n + 1}/{len(s)} fid {idx} lcz {b.lcz}: {len(keep)} views, images so far {n_img}", flush=True)
+        if (n + 1) % 25 == 0:  # checkpoint: fetched images are billed, so a crash must not lose their rows
+            pd.DataFrame(rows).to_csv(out / "multiview.csv", index=False)
 
     df = pd.DataFrame(rows)
     df.to_csv(out / "multiview.csv", index=False)
