@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DIFF_STOPS, colorFor, computeStats, fmt, signed, verdictsCsv, type Sample } from "./lib";
+import { DIFF_STOPS, LCZ_COLORS, LCZ_NAMES, colorFor, computeStats, fmt, lczColorExpr, lczLabel, signed, verdictsCsv, type Sample } from "./lib";
 
 const s = (fid: number, h: number, hl: number | null) =>
   ({ fid, h, hl, storeys: 2, use: "residential", conf: "high", sliver: false, cut: false }) as Sample;
@@ -30,6 +30,25 @@ describe("verdictsCsv", () => {
       "fid,verdict,gba_height,llm_height,storeys,use,confidence,sliver,roof_cut",
       "2,wrong,20,,2,residential,high,false,false",
     ]);
+  });
+});
+
+describe("LCZ layer", () => {
+  it("labels built types 1-10 and natural types A-G", () => {
+    expect([1, 10, 11, 17].map(lczLabel)).toEqual(["1", "10", "A", "G"]);
+  });
+
+  it("has a name and colour for every code 1-17", () => {
+    for (let c = 1; c <= 17; c++) {
+      expect(LCZ_NAMES[c]).toBeTruthy();
+      expect(LCZ_COLORS[c]).toMatch(/^#[0-9a-f]{6}$/);
+    }
+  });
+
+  it("builds a match expression with numeric codes and a fallback colour", () => {
+    expect(lczColorExpr.slice(0, 2)).toEqual(["match", ["get", "lcz"]]);
+    expect(lczColorExpr.slice(2, 4)).toEqual([1, LCZ_COLORS[1]]);
+    expect(lczColorExpr).toHaveLength(2 + 17 * 2 + 1);
   });
 });
 

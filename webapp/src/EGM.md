@@ -13,17 +13,19 @@ Source of the single-page viewer. `main.tsx` mounts `App` in `StrictMode`. `App.
   - Colour: `HEIGHT_STOPS`, `DIFF_STOPS`, `NO_DATA`, `colorExpr(mode)`, `heightExpr(mode)`, `colorFor(stops, v)`.
   - Statistics: `computeStats(samples)` returns `{ n, mae, bias, corr }` over samples with `hl != null`, or `null` when fewer than 2.
   - Verdicts: `VERDICTS`, `loadVerdicts(city)`, `saveVerdicts(city, v)`, `verdictsCsv(samples, v)`.
-  - Constants: `USES`, `CONFS`, `LCZ_NAMES`, `EMBED_KEY`.
+  - LCZ layer: `LCZ_NAMES` and `LCZ_COLORS` (codes 1-17; 11-17 are the natural types A-G), `lczLabel(code)`, `lczColorExpr`.
+  - Constants: `USES`, `CONFS`, `EMBED_KEY`.
   - URLs and formatting: `embedUrl(im)`, `streetViewUrl(pano)`, `fmt`, `signed`.
 - `vite-env.d.ts`: Vite client type declarations.
 - `styles.css`: styles for the classes used in the components.
-- [components/](./components/EGM.md): About, Detail, Legend and Scatter.
+- [components/](./components/EGM.md): About, Detail, Legend, LczLegend and Scatter.
 
 ## Invariants
 
 - Data contract with `scripts/export_web.py`: the `Sample` fields (`fid, lcz, h, storeys, use, conf, hl, note, nvis, imgs, vt, sliver, cut, alt`) match the properties written to `samples.geojson`. `lon` and `lat` come from the GeoJSON point, and `dh` is computed in `App.tsx` as `hl - h`.
 - Vector tiles use source layer `b` with feature properties `h`, `fid`, `hl`, `dh`. `bld-sel` and `samples-sel` select by `fid`, with `-1` meaning nothing selected.
-- Data is expected at `${import.meta.env.BASE_URL}data/cities.json` and `.../data/<city>/{buildings.pmtiles,samples.geojson,assumptions.json,img/<f>}`. `assumptions.json` (`Assumptions`: `floor_h`, `roof_m`) is optional: if it is missing, the About tab omits the assumptions table. `cities.json` is maintained by hand (no script in `scripts/` writes it) and is not gitignored.
+- Data is expected at `${import.meta.env.BASE_URL}data/cities.json` and `.../data/<city>/{buildings.pmtiles,samples.geojson,assumptions.json,lcz.geojson,img/<f>}`. `assumptions.json` (`Assumptions`: `floor_h`, `roof_m`) is optional: if it is missing, the About tab omits the assumptions table. `lcz.geojson` is optional too: if it is missing, the LCZ checkbox is disabled.
+- The LCZ layer is source `lcz` / layer `lcz-fill` (opacity 0.5), above `bld-fill` and below `bld-line`, the selection and the sample dots. It is off by default, is not clickable, and is excluded from the layers the satellite toggle hides. `cities.json` is maintained by hand (no script in `scripts/` writes it) and is not gitignored.
 - A city with `labelled === false` is forced to `gba` mode and has no Inspect tab.
 - The map is created once; changing city swaps the tile URL on source `bld` and flies to the new centre. The `pmtiles` protocol is registered once (module-level `protocolAdded`).
 - Basemap layers whose id starts with `building` are hidden after load so the GBA footprints are visible.

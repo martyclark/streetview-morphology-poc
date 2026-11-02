@@ -11,7 +11,8 @@ import rasterio
 from rasterio.windows import from_bounds
 from scipy.ndimage import minimum_filter, maximum_filter
 
-LCZ_URL = "/vsicurl/https://zenodo.org/api/records/8419340/files/lcz_filter_v3.tif/content"
+from common import LCZ_URL
+
 LCZ_NAMES = {
     1: "1 Compact high-rise", 2: "2 Compact mid-rise", 3: "3 Compact low-rise",
     4: "4 Open high-rise", 5: "5 Open mid-rise", 6: "6 Open low-rise",

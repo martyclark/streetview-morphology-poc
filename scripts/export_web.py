@@ -2,6 +2,8 @@
 
 Writes under webapp/public/data/<city>/:
   buildings.pmtiles  all GBA footprints (vector tiles; labelled ones carry fid, hl, dh)
+  lcz.geojson        Local Climate Zone polygons over the city (reads the global LCZ raster over the network)
+  assumptions.json   floor heights and roof allowance used for LLM heights
   samples.geojson    one point per sampled building with labels, notes and image list
   img/<fid>_<view>.jpg
 
@@ -21,12 +23,15 @@ import geopandas as gpd
 import mapbox_vector_tile
 import numpy as np
 import pandas as pd
+import rasterio
 import shapely
 from PIL import Image
 from pmtiles.tile import Compression, TileType, zxy_to_tileid
 from pmtiles.writer import write
+from rasterio.features import shapes
+from rasterio.windows import from_bounds
 
-from common import FLOOR_H, ROOF, fov_deg
+from common import FLOOR_H, LCZ_URL, ROOF, fov_deg
 
 CAMERA_H = 2.5  # m, assumed Street View camera height
 PITCH = 10  # deg, as fetched
@@ -121,6 +126,25 @@ def build_tiles(gdf, out, bounds_ll):
     print(f"{out}: {len(tiles)} tiles, {Path(out).stat().st_size / 1e6:.1f} MB")
 
 
+def lcz_features(cells, transform):
+    """GeoJSON features, one per connected run of equal LCZ codes (1-17) in a raster window; 0 is no data."""
+    mask = (cells >= 1) & (cells <= 17)
+    return [{"type": "Feature", "properties": {"lcz": int(v)},
+             "geometry": shapely.geometry.mapping(shapely.set_precision(shapely.geometry.shape(g), 1e-5))}
+            for g, v in shapes(cells.astype("uint8"), mask=mask, transform=transform)]
+
+
+def export_lcz(bounds, path):
+    """Write the LCZ map over a city's bounds (lon/lat) as a small GeoJSON for the viewer's optional layer."""
+    with rasterio.open(LCZ_URL) as s:
+        pad = 0.002
+        w = from_bounds(bounds[0] - pad, bounds[1] - pad, bounds[2] + pad, bounds[3] + pad, s.transform).round_offsets().round_lengths()
+        cells, transform = s.read(1, window=w), s.window_transform(w)
+    feats = lcz_features(cells, transform)
+    Path(path).write_text(json.dumps({"type": "FeatureCollection", "features": feats}, separators=(",", ":")))
+    print(f"{path}: {len(feats)} LCZ polygons")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("city")
@@ -137,6 +161,7 @@ def main():
     (out / "assumptions.json").write_text(json.dumps({"floor_h": FLOOR_H, "roof_m": ROOF}, indent=1))
 
     gba = gpd.read_file(a.gba).reset_index(drop=True)
+    export_lcz(tuple(gba.total_bounds), out / "lcz.geojson")  # before the slow tile build, so a network failure shows up early
     gba["h"] = gba.height.round(1)
     gba["fid"] = np.nan
     gba["hl"] = np.nan

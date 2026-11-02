@@ -69,7 +69,7 @@ export default function About({ city, assumptions }: { city?: City; assumptions?
         </li>
         <li>
           <b>Sampling strata:</b> <A href="https://zenodo.org/records/8419340">Global 100 m Local Climate Zone map, v3 (filtered)</A>,
-          Demuzere et al. 2022, <i>Earth System Science Data</i>. Used only to stratify the sample ({Object.entries(LCZ_NAMES).slice(0, 3).map(([k, v]) => `LCZ ${k} ${v}`).join(", ")}…).
+          Demuzere et al. 2022, <i>Earth System Science Data</i>. Used to stratify the sample, and drawn as an optional "Local climate zones" map layer ({Object.entries(LCZ_NAMES).slice(0, 3).map(([k, v]) => `LCZ ${k} ${v}`).join(", ")}…).
         </li>
         <li>
           <b>Street-level imagery:</b> <A href="https://developers.google.com/maps/documentation/streetview/overview">Google Street View Static API</A>.

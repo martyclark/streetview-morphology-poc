@@ -5,9 +5,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import About from "./components/About";
 import Detail from "./components/Detail";
 import Legend from "./components/Legend";
+import LczLegend from "./components/LczLegend";
 import Scatter from "./components/Scatter";
 import {
-  CONFS, USES, VERDICTS, colorExpr, computeStats, fmt, heightExpr, loadVerdicts, saveVerdicts, signed, verdictsCsv,
+  CONFS, USES, VERDICTS, colorExpr, computeStats, fmt, heightExpr, lczColorExpr, loadVerdicts, saveVerdicts, signed, verdictsCsv,
   type Assumptions, type City, type Mode, type Sample, type Verdict,
 } from "./lib";
 
@@ -39,6 +40,8 @@ export default function App() {
   const [extrude, setExtrude] = useState(false);
   const [spin, setSpin] = useState(false);
   const [satellite, setSatellite] = useState(false);
+  const [showLcz, setShowLcz] = useState(false);
+  const [lczClasses, setLczClasses] = useState<number[]>([]); // LCZ codes present in the current city; empty if it has no lcz.geojson
   const [onlyCut, setOnlyCut] = useState(false);
   const [onlySliver, setOnlySliver] = useState(false);
   const [hideWrong, setHideWrong] = useState(false);
@@ -148,6 +151,7 @@ export default function App() {
       const firstLabel = m.getStyle().layers.find((l) => l.type === "symbol")?.id;
       m.addSource("bld", { type: "vector", url: tileUrl(city.id), attribution: "Buildings: Global Building Atlas" });
       m.addSource("samples", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      m.addSource("lcz", { type: "geojson", data: { type: "FeatureCollection", features: [] }, attribution: "LCZ: Demuzere et al. 2022" });
       m.addLayer({ id: "bld-fill", type: "fill", source: "bld", "source-layer": "b", minzoom: 12,
         paint: { "fill-color": colorExpr("gba"), "fill-opacity": 0.9 } }, firstLabel);
       m.addLayer({ id: "bld-ext", type: "fill-extrusion", source: "bld", "source-layer": "b", minzoom: 14,
@@ -155,6 +159,9 @@ export default function App() {
         paint: { "fill-extrusion-color": colorExpr("gba"), "fill-extrusion-height": heightExpr("gba"), "fill-extrusion-opacity": 0.92 } }, firstLabel);
       m.addLayer({ id: "bld-line", type: "line", source: "bld", "source-layer": "b", minzoom: 15.5,
         paint: { "line-color": "#ffffff", "line-width": 0.4, "line-opacity": 0.7 } }, firstLabel);
+      // translucent, over the footprints but under their outlines, the selection and the sample dots
+      m.addLayer({ id: "lcz-fill", type: "fill", source: "lcz", layout: { visibility: "none" },
+        paint: { "fill-color": lczColorExpr, "fill-opacity": 0.5 } }, "bld-line");
       m.addLayer({ id: "bld-sel", type: "line", source: "bld", "source-layer": "b", filter: ["==", ["get", "fid"], -1],
         paint: { "line-color": "#10233d", "line-width": 2.5 } });
       m.addLayer({ id: "samples-halo", type: "circle", source: "samples",
@@ -191,13 +198,34 @@ export default function App() {
     m.flyTo({ center: city.center, zoom: city.zoom, pitch: 0, bearing: 0, duration: 1800 });
   }, [ready, city]);
 
+  // LCZ polygons for the current city
+  useEffect(() => {
+    if (!ready || !cityId) return;
+    const src = map.current!.getSource("lcz") as maplibregl.GeoJSONSource;
+    let live = true;
+    fetch(`${DATA}/${cityId}/lcz.geojson`).then((r) => (r.ok ? r.json() : Promise.reject())).then((fc) => {
+      if (!live) return;
+      src.setData(fc);
+      setLczClasses([...new Set<number>(fc.features.map((f: any) => f.properties.lcz))].sort((a, b) => a - b));
+    }).catch(() => {
+      if (!live) return;
+      src.setData({ type: "FeatureCollection", features: [] });
+      setLczClasses([]);
+    });
+    return () => { live = false; };
+  }, [ready, cityId]);
+
+  useEffect(() => {
+    if (ready) map.current!.setLayoutProperty("lcz-fill", "visibility", showLcz ? "visible" : "none");
+  }, [ready, showLcz]);
+
   // satellite: hide the vector basemap's fills and roads (keep labels) and show imagery underneath our footprints
   useEffect(() => {
     if (!ready) return;
     const m = map.current!;
     if (satellite) {
       hiddenBySat.current = m.getStyle().layers
-        .filter((l) => l.type !== "symbol" && l.type !== "background" && l.type !== "raster" && !["bld", "samples"].includes((l as any).source ?? "")
+        .filter((l) => l.type !== "symbol" && l.type !== "background" && l.type !== "raster" && !["bld", "samples", "lcz"].includes((l as any).source ?? "")
           && m.getLayoutProperty(l.id, "visibility") !== "none")
         .map((l) => l.id);
       hiddenBySat.current.forEach((id) => m.setLayoutProperty(id, "visibility", "none"));
@@ -359,6 +387,11 @@ export default function App() {
                 <button className={satellite ? "on" : ""} onClick={() => setSatellite(true)}>Satellite</button>
               </div>
               <Legend mode={mode} />
+              <label className="check" title={lczClasses.length ? undefined : "No LCZ data exported for this city"}>
+                <input type="checkbox" checked={showLcz && lczClasses.length > 0} disabled={!lczClasses.length} onChange={(e) => setShowLcz(e.target.checked)} />
+                Local climate zones (LCZ)
+              </label>
+              {showLcz && lczClasses.length > 0 && <LczLegend classes={lczClasses} />}
             </div>
           </div>
         </section>

@@ -9,6 +9,7 @@ Presentational React components for the viewer's side panel and map overlay. The
 - `About.tsx`: default export `About({ city?: City, assumptions?: Assumptions })`. Explanation of method, datasets and limits, with a table of the height assumptions taken from the `assumptions` prop and a hard-coded list of data sources.
 - `Detail.tsx`: default export `Detail({ sample, base, position, verdict?, onVerdict, onPrev, onNext, onClose })`. Shows heights, the right/wrong/unsure verdict buttons, warnings for `sample.sliver` and `sample.cut`, the photos from `${base}/img/<f>`, the model's label and note, the optional second opinion `sample.alt`, a full-size image lightbox, and a panorama modal.
 - `Legend.tsx`: default export `Legend({ mode })`. Colour bar from `HEIGHT_STOPS` or `DIFF_STOPS` plus a "not sampled" swatch for `NO_DATA` when `mode !== "gba"`.
+- `LczLegend.tsx`: default export `LczLegend({ classes })`. Colour swatch, label and name for each LCZ code in `classes`, from `LCZ_COLORS` and `LCZ_NAMES`.
 - `Scatter.tsx`: default export `Scatter({ samples, selected, onSelect })`. SVG plot of GBA height (`h`) against LLM height (`hl`), both clipped to `MAX = 25` m, with a 1:1 line. Samples with `hl == null` are not drawn. Clicking a dot calls `onSelect(fid)`.
 
 ## Invariants

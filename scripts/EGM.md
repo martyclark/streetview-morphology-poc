@@ -6,7 +6,7 @@ Command-line pipeline that turns a city's Global Building Atlas (GBA) footprints
 
 ## Interface
 
-- `common.py`: `FLOOR_H` (storey height by use), `ROOF` (roof allowance, currently 0.0 for flat roofs; both are placeholders), `fov_deg`. Imported as `common`, which works because Python puts the script's directory on `sys.path`.
+- `common.py`: `FLOOR_H` (storey height by use), `ROOF` (roof allowance, currently 0.0 for flat roofs; both are placeholders), `LCZ_URL` (global LCZ raster, also used by `lcz_sample_frame.py`), `fov_deg`. Imported as `common`, which works because Python puts the script's directory on `sys.path`.
 
 Each script's entry point is `main()` guarded by `if __name__ == "__main__"`, except `apply_labels.py` and `contact_sheets.py`, which run at module level and read `sys.argv` positionally.
 
@@ -16,7 +16,7 @@ Each script's entry point is `main()` guarded by `if __name__ == "__main__"`, ex
 - `contact_sheets.py` (module level): `multiview.csv outdir`. Writes `outdir/sheet_<nn>_fids_<a>_<b>.jpg`, two buildings per sheet. Constant `TILE`.
 - `classify_gemini.py` (`main`, `classify`, `marked_jpeg`, `api_key`): `multiview out [--model gemini-3.1-flash-lite] [--sleep 4] [--hints-sample sample.gpkg]`. Writes a CSV with `fid, lcz, n_views, storeys, use, confidence, n_visible, note`. Constants `URL`, `PROMPT`, `HINT_PROMPT`, `SCHEMA`.
 - `apply_labels.py` (module level): `pilot.csv labels.csv out.csv`. Joins on `fid`, adds `height_new` and `diff_gba_minus_new`, and prints error statistics. Constants `FLOOR_H`, `ROOF`.
-- `export_web.py` (`main`, `build_tiles`, `height_from`, `view_geometry`, `is_sliver`, `tile_bounds`): `city --gba gpkg [--sample gpkg] [--labels csv] [--multiview csv ...] [--second-pass csv] [--skip-tiles] [--out webapp/public/data]`. Writes `<out>/<city>/buildings.pmtiles`, `samples.geojson`, `assumptions.json` (`{floor_h, roof_m}` from `common.py`) and `img/<fid>_<view>.jpg`. LLM heights (`hl`) are computed here with `height_from(storeys, use)`; the `height_new` column in the labels CSV is not read. Constants `FLOOR_H`, `ROOF`, `CAMERA_H`, `PITCH`, `ZOOMS`, `EXTENT`, `MIN_AREA_Z12`.
+- `export_web.py` (`main`, `build_tiles`, `lcz_features`, `export_lcz`, `height_from`, `view_geometry`, `is_sliver`, `tile_bounds`): `city --gba gpkg [--sample gpkg] [--labels csv] [--multiview csv ...] [--second-pass csv] [--skip-tiles] [--out webapp/public/data]`. Writes `<out>/<city>/buildings.pmtiles`, `samples.geojson`, `lcz.geojson` (one polygon per connected run of equal LCZ codes 1-17 over the city's bounds, property `lcz`), `assumptions.json` (`{floor_h, roof_m}` from `common.py`) and `img/<fid>_<view>.jpg`. LLM heights (`hl`) are computed here with `height_from(storeys, use)`; the `height_new` column in the labels CSV is not read. Constants `FLOOR_H`, `ROOF`, `CAMERA_H`, `PITCH`, `ZOOMS`, `EXTENT`, `MIN_AREA_Z12`.
 - `mapillary_coverage.py` (`main`, `fetch_tile`): `gpkg [--n 5000] [--radius 40] [--out gpkg]`. Prints Mapillary coverage statistics for a random building sample. Constants `API`, `TILE_DEG`.
 
 ## Invariants
@@ -32,7 +32,7 @@ Each script's entry point is `main()` guarded by `if __name__ == "__main__"`, ex
 
 ## Side Effects
 
-- Network: Google Street View metadata and Static APIs (`streetview_pilot.py`, `streetview_multiview.py`), Gemini `generateContent` (`classify_gemini.py`), Mapillary Graph API (`mapillary_coverage.py`), and a remote range-read of the Zenodo LCZ GeoTIFF through GDAL `/vsicurl/` (`lcz_sample_frame.py`).
+- Network: Google Street View metadata and Static APIs (`streetview_pilot.py`, `streetview_multiview.py`), Gemini `generateContent` (`classify_gemini.py`), Mapillary Graph API (`mapillary_coverage.py`), and a remote range-read of the Zenodo LCZ GeoTIFF through GDAL `/vsicurl/` (`lcz_sample_frame.py` and `export_web.py`, so an export needs network access even when the labels are local).
 - Credentials: `GOOGLE_MAPS_API_KEY`, `GEMINI_API_KEY` and `MAPILLARY_TOKEN` are read from the environment. The first two fall back to `.env.toml` at the repository root. Scripts exit with "Set ..." if none is found.
 - Disk: each script writes only the output paths named in Interface. `export_web.py` skips existing `img/<fid>_<view>.jpg` files but always rewrites `samples.geojson` and, unless `--skip-tiles`, `buildings.pmtiles`.
 - Console: `apply_labels.py`, `lcz_sample_frame.py`, `streetview_*`, `classify_gemini.py` and `mapillary_coverage.py` print their statistics to stdout. `classify_gemini.py` prints per-building errors to stderr and continues.

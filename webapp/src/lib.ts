@@ -161,7 +161,20 @@ export const CONFS = ["high", "medium", "low"];
 export const LCZ_NAMES: Record<number, string> = {
   1: "Compact high-rise", 2: "Compact mid-rise", 3: "Compact low-rise", 4: "Open high-rise", 5: "Open mid-rise",
   6: "Open low-rise", 7: "Lightweight low-rise", 8: "Large low-rise", 9: "Sparsely built", 10: "Heavy industry",
+  11: "Dense trees", 12: "Scattered trees", 13: "Bush, scrub", 14: "Low plants", 15: "Bare rock or paved", 16: "Bare soil or sand", 17: "Water",
 };
+
+/** Standard LCZ colours (Stewart & Oke 2012 / WUDAPT). Codes 11-17 are the natural types A-G. */
+export const LCZ_COLORS: Record<number, string> = {
+  1: "#910613", 2: "#d9081c", 3: "#ff0a22", 4: "#c54f1e", 5: "#ff6628", 6: "#ff985e", 7: "#fded3f", 8: "#bbbbbb", 9: "#ffcbab", 10: "#565656",
+  11: "#006a18", 12: "#00a926", 13: "#628432", 14: "#b5da7f", 15: "#000000", 16: "#fcf7b0", 17: "#6969fa",
+};
+
+/** "6" for built types, "A"-"G" for natural ones. */
+export const lczLabel = (code: number) => (code <= 10 ? String(code) : "ABCDEFG"[code - 11]);
+
+/** MapLibre colour expression for the `lcz` property of lcz.geojson features. */
+export const lczColorExpr: any = ["match", ["get", "lcz"], ...Object.entries(LCZ_COLORS).flat().map((v, i) => (i % 2 ? v : Number(v))), "#cccccc"];
 
 export const EMBED_KEY: string | undefined = import.meta.env.VITE_GMAPS_EMBED_KEY || undefined;
 
