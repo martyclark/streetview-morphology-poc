@@ -1,6 +1,7 @@
 """Classify Street View crops of a building (all views together) with Gemini.
 
 Usage: python scripts/classify_gemini.py multiview.csv out.csv [--model gemini-3.1-flash-lite] [--sleep 4]
+If out.csv already exists, buildings with a label in it are skipped and failed ones are retried.
 """
 import argparse
 import base64
@@ -111,7 +112,14 @@ def main():
     d = d[d.img.notna()]
     area = gpd.read_file(a.hints_sample).area_m2 if a.hints_sample else None
     rows = []
+    if Path(a.out).exists():
+        prev = pd.read_csv(a.out)
+        rows = prev[prev.storeys.notna()].to_dict("records")
+        print(f"resuming: {len(rows)} labelled buildings kept from {a.out}", flush=True)
+    done = {r["fid"] for r in rows}
     for n, (fid, g) in enumerate(d.groupby("fid", sort=False)):
+        if fid in done:
+            continue
         try:
             g = g.sort_values("view")
             hints = [(r.dist_m, area[fid]) for r in g.itertuples()] if area is not None else None
@@ -122,6 +130,8 @@ def main():
             print(f"fid {fid}: {e}", file=sys.stderr)
             rows.append({"fid": fid, "lcz": g.lcz.iloc[0], "n_views": len(g), "note": f"ERROR {e}"[:200]})
         print(f"{n + 1} fid {fid}: {rows[-1].get('storeys')} {rows[-1].get('use')} {rows[-1].get('confidence')}", flush=True)
+        if (n + 1) % 25 == 0:  # checkpoint, so a crash or a stop does not lose the labels so far
+            pd.DataFrame(rows).to_csv(a.out, index=False)
         time.sleep(a.sleep)
     pd.DataFrame(rows).to_csv(a.out, index=False)
 
