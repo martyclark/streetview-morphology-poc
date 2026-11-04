@@ -15,8 +15,8 @@
     "country": "Nigeria",
     "center": [8.89, 9.9],
     "zoom": 12.4,
-    "source": "",
-    "labelled": false,
+    "source": "Gemini 3.1 Flash-Lite, up to 3 Street View crops per building. 302 of 1,412 sampled buildings had a clear view; the sample is biased to street-facing buildings",
+    "labelled": true,
     "buildings": 418878
   }
 ]
