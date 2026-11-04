@@ -176,3 +176,5 @@ button { cursor: pointer; }
 .review { margin: 14px 0 4px; padding: 12px 14px; border-radius: 16px; background: var(--panel-strong); font-size: 13px; line-height: 1.6; }
 .review button { margin-left: 10px; border: 1px solid var(--panel-border); border-radius: 10px; background: #fff; padding: 3px 10px; font-size: 12px; }
 .review button:disabled { opacity: 0.45; }
+
+.hover-tip .maplibregl-popup-content { padding: 6px 10px; border-radius: 10px; font-size: 12px; color: #10233d; pointer-events: none; }

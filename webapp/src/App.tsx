@@ -181,6 +181,15 @@ export default function App() {
           m.getCanvas().style.cursor = e.features?.some((x) => x.properties?.fid != null) ? "pointer" : "";
         });
       }
+      const tip = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10, className: "hover-tip" });
+      m.on("mousemove", "samples", (e) => {
+        const p = e.features?.[0]?.properties;
+        if (!p) return;
+        const el = document.createElement("div");
+        el.textContent = `${p.storeys == null ? "storeys unknown" : `${p.storeys} storey${p.storeys === 1 ? "" : "s"}`}, ${p.use} · GBA ${fmt(p.h)} m · LLM ${fmt(p.hl)} m`;
+        tip.setLngLat(e.lngLat).setDOMContent(el).addTo(m);
+      });
+      m.on("mouseleave", "samples", () => tip.remove());
       setReady(true);
     });
     map.current = m;
